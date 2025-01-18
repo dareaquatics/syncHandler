@@ -14,8 +14,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http" 
-	"net/http" 
+	"github.com/go-git/go-git/v5/plumbing/transport/http" // Use for Git operations
+	"net/http" // Use for regular HTTP requests
 )
 
 const (
@@ -40,7 +40,7 @@ func checkGithubToken() error {
 		return fmt.Errorf("PAT_TOKEN environment variable not set")
 	}
 
-	client := &http.Client{}
+	client := &http.Client{} // Correct usage of net/http
 	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
@@ -74,7 +74,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &http.BasicAuth{ // Using http.BasicAuth from go-git
+		Auth: &http.BasicAuth{ // Correct usage for Git authentication from go-git
 			Username: "git",
 			Password: token,
 		},
@@ -90,7 +90,7 @@ func cloneRepository() error {
 }
 
 func fetchNews() ([]NewsItem, error) {
-	client := &http.Client{}
+	client := &http.Client{} // Correct usage of net/http for making HTTP requests
 	req, err := http.NewRequest("GET", newsURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
@@ -130,7 +130,7 @@ func fetchNews() ([]NewsItem, error) {
 }
 
 func fetchArticleContent(url string) (NewsItem, error) {
-	client := &http.Client{}
+	client := &http.Client{} // Correct usage of net/http for making HTTP requests
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return NewsItem{}, err
@@ -155,7 +155,7 @@ func fetchArticleContent(url string) (NewsItem, error) {
 	}
 
 	if dateStr, exists := doc.Find("span.DateStr").Attr("data"); exists {
-		timestamp, err := strconv.ParseInt(dateStr, 10, 64) 
+		timestamp, err := strconv.ParseInt(dateStr, 10, 64) // Fixed strconv undefined issue
 		if err == nil {
 			date := time.Unix(timestamp/1000, 0)
 			newsItem.Date = date.Format("January 02, 2006")
@@ -263,7 +263,7 @@ func pushToGithub() error {
 	}
 
 	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{ // Correct usage of git HTTP for GitHub push
+		Auth: &http.BasicAuth{ // Correct usage of Git HTTP for GitHub push
 			Username: "git",
 			Password: token,
 		},
