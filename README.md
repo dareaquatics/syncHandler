@@ -1,2 +1,2 @@
 # syncHandler
-Experimental Rust sync handlers for dareaquatics.com
+Experimental Go sync handlers for dareaquatics.com
