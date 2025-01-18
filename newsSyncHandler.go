@@ -14,7 +14,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http" // Renamed to gitHttp
+	"github.com/go-git/go-git/v5/plumbing/transport/http" 
+	"net/http" 
 )
 
 const (
@@ -73,7 +74,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &gitHttp.BasicAuth{ // Renamed http to gitHttp
+		Auth: &http.BasicAuth{ // Using http.BasicAuth from go-git
 			Username: "git",
 			Password: token,
 		},
@@ -154,7 +155,7 @@ func fetchArticleContent(url string) (NewsItem, error) {
 	}
 
 	if dateStr, exists := doc.Find("span.DateStr").Attr("data"); exists {
-		timestamp, err := strconv.ParseInt(dateStr, 10, 64) // Fixed strconv undefined issue
+		timestamp, err := strconv.ParseInt(dateStr, 10, 64) 
 		if err == nil {
 			date := time.Unix(timestamp/1000, 0)
 			newsItem.Date = date.Format("January 02, 2006")
@@ -262,7 +263,7 @@ func pushToGithub() error {
 	}
 
 	err = repo.Push(&git.PushOptions{
-		Auth: &gitHttp.BasicAuth{ // Renamed http to gitHttp
+		Auth: &http.BasicAuth{ // Correct usage of git HTTP for GitHub push
 			Username: "git",
 			Password: token,
 		},
