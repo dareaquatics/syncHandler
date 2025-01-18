@@ -1,0 +1,68 @@
+/* Basic reset for body margin */
+body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Hide content initially and ensure it fades in */
+  #content {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    display: none; /* Hide by default */
+  }
+  
+  /* Style for the loading screen with fade-out transition */
+  #loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 1s ease-in-out;
+  }
+  
+  /* Loading screen transition class */
+  #loading-screen.fade-out {
+    opacity: 0;
+  }
+  
+  /* Bouncing dots animation */
+  .bouncing-dots {
+    display: flex;
+    justify-content: space-between;
+    width: 80px;
+  }
+  
+  .dot {
+    width: 16px;
+    height: 16px;
+    background-color: #eb5d1e; 
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+  }
+  
+  .dot:nth-child(2) {
+    animation-delay: -0.32s;
+  }
+  
+  .dot:nth-child(3) {
+    animation-delay: -0.16s;
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-30px);
+    }
+    60% {
+      transform: translateY(-15px);
+    }
+  }
+  

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+  .news-container {
+    max-width: 1290px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+
+  .news-item {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .news-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .news-title {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .news-date {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+  }
+
+  .news-content {
+    color: #444;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .news-content a {
+    color: #ffa07a;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .news-content a:hover {
+    color: #eb5d1e;
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .section-title::after {
+    content: "";
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #eb5d1e;
+    margin: 10px auto;
+  }
+</style>
+
+<head>
+<!-- No JS Check -->
+<noscript>
+  <meta http-equiv="refresh" content="0; url=/javascriptRequired.html?redirect=true&target=" id="noscript-redirect">
+</noscript>
+<script>
+  // Script to run on page load to verify JavaScript is working
+  window.addEventListener('load', function() {
+      // Check if we were redirected back from the JS required page
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('jscheck') === 'true') {
+          // Remove the query parameter for clean URL
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+      }
+      
+      // Set a flag in localStorage to indicate JS is enabled
+      localStorage.setItem('jsEnabled', 'true');
+  });
+</script>
+
+  <!-- Google Analytics (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QXFQXHX3SN"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+    gtag("config", "G-QXFQXHX3SN");
+  </script>
+  <!-- Google Analytics End (gtag.js) -->
+
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+
+  <title>DARE Aquatics | News</title>
+  <meta content="dare aquatics website" name="description" />
+  <meta
+    content="dare aquatics, swimming, swim, alhambra, monterey park, california, swim club, club, swim, breastroke, freestyle, backstroke, butterfly, los angeles, swim club near me"
+    name="keywords" />
+
+  <!-- favicons -->
+  <link rel="icon" href="assets/img/logo.png">
+  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
+
+  <!-- gfonts -->
+  <link
+    href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,600,600i,700,700i"
+    rel="stylesheet" />
+
+  <!-- /vendor/ css files -->
+  <link href="assets/vendor/aos/aos.css" rel="stylesheet" />
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet" />
+  <link href="assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet" />
+  <link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet" />
+  <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/holidayStyle.css" />
+
+  <!-- style.css -->
+  <link href="assets/css/style.css" rel="stylesheet" />
+  <link href="assets/css/loadingAnimation.css" rel="stylesheet" />
+
+  <div id="loading-screen">
+    <div class="bouncing-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</head>
+
+<body>
+  <!-- Header -->
+  <header id="header" class="fixed-top d-flex align-items-center">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="logo">
+        <a href="/"><img src="assets/img/logo.png" alt="DARE Aquatics Logo" class="img-fluid" /></a>
+      </div>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto" href="/">Home</a></li>
+          <li><a class="nav-link scrollto" href="coaches">Coaches</a></li>
+          <li><a class="nav-link scrollto" href="calendar">Calendar</a></li>
+          <li><a class="nav-link scrollto" href="faq">F.A.Q</a></li>
+          <li><a class="nav-link scrollto" href="groups">Swim Groups</a></li>
+          <li><a class="nav-link scrollto active" href="news">News</a></li>
+          <li>
+            <a class="nav-link scrollto" href="locations">Pool Locations</a>
+          </li>
+          <li><a class="nav-link scrollto" href="pbc">PBC</a></li>
+          <li><a class="nav-link scrollto" href="contact">Contact</a></li>
+          <li>
+            <a class="getstarted scrollto"
+              href="https://www.gomotionapp.com/Login5.jsp?sn=www.gomotionapp.com&team=cadas&_tu_Login_Redirect_=/team/cadas/controller/cms/admin/index&_tu_Login_Error_Redirect_=true"
+              target="_blank" rel="noopener noreferrer">Sign In</a>
+          </li>
+          <p style="display: none">
+            &#68;&#105;&#103;&#105;&#116;&#97;&#108;&#108;&#121;&#32;&#119;&#97;&#116;&#101;&#114;&#109;&#097;&#114;&#107;&#101;&#100;&#32;&#98;&#121;&#32;&#82;&#121;&#097;&#110;&#32;&#076;&#117;&#32;&#48;&#56;&#49;&#56;&#50;&#48;&#48;&#56;
+          </p>
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav>
+      <!-- .navbar -->
+    </div>
+  </header>
+  <!-- end header -->
+
+  <main id="main">
+    <!-- breadcrumbs -->
+    <section class="breadcrumbs">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2>News</h2>
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li>News & Updates</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+    <!-- end breadcrumbs -->
+
+    <section class="inner-page">
+      <div class="container">
+        <h1 class="section-title">Latest News & Updates</h1>
+        <div class="news-container">
+          <!-- DO NOT TOUCH THE BELOW COMMENT.-->
+          <!-- START UNDER HERE -->
+
+        <div class="news-item">
+            <h2 class="news-title"><strong>ATTN: AG1 AG2 &amp; Pre-Elite</strong></h2>
+            <p class="news-date">Author: Joy Lim</p>
+            <p class="news-date">Published on December 10, 2024</p>
+            <div class="news-content"> <div> ATTN!!!!! AG 1 AG 2 Pre-Elite </div> <div> <br/> </div> <div> Practice canceled for today due to a heater malfunction. Current pool temp reads high 77, and it is expected to drop drastically as the sun sets. </div> </div>
+        </div>
+        
+        <div class="news-item">
+            <h2 class="news-title"><strong>Pre-National/National group updated schedule</strong></h2>
+            <p class="news-date">Author: Samuel Jo</p>
+            <p class="news-date">Published on November 21, 2024</p>
+            <div class="news-content"> <div> Last minute update </div> <div> Pre-National/National group </div> <div> Dryland will be from 4:50-5:20 and swim will be from 5:30-7:<li>00. </div> </div>
+        </div>
+        
+        <div class="news-item">
+            <h2 class="news-title"><strong>Clothing Drive - TODAY @ ALHAMBRA</strong></h2>
+            <p class="news-date">Author: Joy Lim</p>
+            <p class="news-date">Published on October 25, 2024</p>
+            <div class="news-content"> <div> (REPOST FROM THE TEAM FB PAGE) </div> <div> <br/> </div> <div> Good morning DARE families, </div> <div> <br/> </div> <div> RE: Clothing Donation Collectio </div> <div> <br/> </div> <div> Our collection will be: </div> <div> Friday 10/25/24 </div> <div> Time: 3:30 - 6:30 pm </div> <div> Site: Alhambra Pool - South Raymond Ave </div> <div> <br/> </div> <div> For those members practicing at Granada Pool; you may drop off your donation items before or after your scheduled practice. </div> <div> <br/> </div> <div> Reminder: Please donate items in clean and reusable condition. </div> <div> <br/> </div> <div> Volunteers: Bring your own masks, gloves, and whatever else you’re comfortable with handling donations. </div> <div> <br/> </div> <div> Thank you in advance for your cooperation ❤️ </div> <div> <br/> </div> <div> Grandma Christine </div> </div>
+        </div>
+        
+        <div class="news-item">
+            <h2 class="news-title"><strong>Pool Closure Announcement</strong></h2>
+            <p class="news-date">Author: Joy Lim</p>
+            <p class="news-date">Published on March 18, 2024</p>
+            <div class="news-content"> BOTH POOLS ARE CLOSED (4pm) <div> <br/> </div> <div> The city of Alhambra announced the pool closure due to unexpected thunderstorm. </div> <div> <br/> </div> </div>
+        </div>
+        
+        <div class="news-item">
+            <h2 class="news-title"><strong>ATTN!! POOL CLOSURE - Fri 03/14</strong></h2>
+            <p class="news-date">Author: Joy Lim</p>
+            <p class="news-date">Published on March 15, 2024</p>
+            <div class="news-content"> ATTN ALL PARENTS <div> <br/> </div> <div> Both Alhambra and Granada pool are closed by the city due to multiple thunders. </div> <div> All group practice hereafter are now canceled </div> </div>
+        </div>
+        
+        <div class="news-item">
+            <h2 class="news-title"><strong>TRAINING CANCELED - Thursday, March 7</strong></h2>
+            <p class="news-date">Author: Joy Lim</p>
+            <p class="news-date">Published on March 07, 2024</p>
+            <div class="news-content"> <b>ATTN ALL TRAINING GROUPS </b> <div> <br/> </div> <div> The City of Alhambra has shut down both Alhambra and Granada for the rest of the day due to thundering. </div> <div> Training is canceled for all groups today. <br/> <div> <div> <br/> </div> <div> <br/> </div> </div> </div> </div>
+        </div>
+        
+<!-- END AUTOMATION SCRIPT -->
+          <!-- DO NOT TOUCH THE ABOVE COMMENT.-->
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- end #main -->
+  </div>
+  </div>
+  </section>
+  </main>
+  <!-- end #main -->
+
+  <!-- footer -->
+  <footer id="footer">
+    <!-- leave this here or the website looks ugly :( -->
+    <div class="footer-newsletter">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-6">
+            <h4></h4>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end -->
+
+    <div class="footer-top">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-3 col-md-6 footer-contact">
+            <h3>DARE Aquatics</h3>
+            <p>
+              110 West 6th Street P.O Box 256 <br />
+              Azuza, California 91702 <br />
+              United States <br /><br />
+              <strong>Email:</strong><a href="mailto:contact@dareaquatics.com">
+                contact@dareaquatics.com</a><br />
+              <p>Use our contact <a href="/contact">form</a> for faster responses.</p>
+            </p>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Useful Links</h4>
+            <ul>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="/" target="_blank" rel="noopener noreferrer">Home</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://www.gomotionapp.com/team/cadas/page/home" target="_blank"
+                  rel="noopener noreferrer">TeamUnify</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://status.dareaquatics.com" target="_blank" rel="noopener noreferrer">Status Page</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://github.com/dareaquatics/dare-website" target="_blank" rel="noopener noreferrer">Source
+                  Code</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="/policy" target="_blank" rel="noopener noreferrer">Team Policy Documents</a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Useful Links</h4>
+
+            <ul>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://www.usaswimming.org/" target="_blank" rel="noopener noreferrer">USA Swimming</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://www.usaswimming.org/safe-sport" target="_blank" rel="noopener noreferrer">Safe
+                  Sport</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://uscenterforsafesport.org/report-a-concern/" target="_blank"
+                  rel="noopener noreferrer">Report a Concern (SafeSport)</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://www.goswim.tv/" target="_blank" rel="noopener noreferrer">GoSwim</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="http://www.swimmingworldmagazine.com" target="_blank" rel="noopener noreferrer">Swimming World
+                  Online</a>
+              </li>
+              <li>
+                <i class="bx bx-chevron-right"></i>
+                <a href="https://swimmingcoach.org" target="_blank" rel="noopener noreferrer">American Swimming Coaches
+                  Association</a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 footer-links">
+            <h4>Our Social Networks</h4>
+            <p>Follow our social media to stay updated on latest events!</p>
+            <div class="social-links mt-3">
+              <a href="https://www.facebook.com/groups/228419265212105/?ref=share&mibextid=I6gGtw" class="facebook"><i
+                  class="bx bxl-facebook"></i></a>
+              <a href="https://www.instagram.com/dareaquatics" class="instagram"><i class="bx bxl-instagram"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-4">
+      <div class="copyright">
+        &copy; Copyright <strong><span>DARE Aquatics</span></strong>. All Rights Reserved. Licensed under the
+        <a href="license">GPLv3.</a>
+      </div>
+      <div class="credits">Made with ❤️ by Ryan</div>
+    </div>
+  </footer>
+  <!-- End Footer -->
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i
+      class="bi bi-arrow-up-short"></i></a>
+
+  <!-- /vendor/ js files -->
+  <script src="assets/vendor/aos/aos.js"></script>
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+  <script src="assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+
+  <!-- main.js -->
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/maintenanceStatusLogic.js"></script>
+  <script src="assets/js/loaderLogic.js"></script>
+</body>
+
+</html>
