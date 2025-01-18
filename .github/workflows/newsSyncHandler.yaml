@@ -3,7 +3,7 @@ name: Update News
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */2 * * *" # Runs every 2 hours
+    - cron: "0 */2 * * *"
 
 jobs:
   update-news:
@@ -11,24 +11,31 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
-          python-version: "3.9"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install cloudscraper beautifulsoup4 gitpython colorlog tqdm
-
+          go-version: '1.21'
+          cache: true
       - name: Set up Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+      - name: Install dependencies
+        run: |
+          go mod init news-sync
+          go get github.com/go-git/go-git/v5
+          go get github.com/PuerkitoBio/goquery
+          go get -d ./...
+          go mod tidy
+      - name: Build
+        run: go build -v ./newsSyncHandler.go
       - name: Run the script
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          python autosyncNewsLogic.py
+          ./newsSyncHandler
+      - name: Check for errors
+        if: failure()
+        run: |
+          echo "::error::News sync failed. Check logs for details."
+          exit 1
