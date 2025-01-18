@@ -2,7 +2,7 @@ name: Update Calendar
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *" # Runs daily at midnight
+    - cron: "0 0 * * *" # Runs daily at midnight UTC
 
 jobs:
   update-calendar:
@@ -24,11 +24,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go mod init calendar-sync
+          go mod tidy
           go get github.com/go-git/go-git/v5
           go get github.com/apognu/gocal
           go get -d ./...
-          go mod tidy
 
       - name: Build
         run: go build -v ./calendarSyncHandler.go
@@ -39,8 +38,9 @@ jobs:
         run: |
           ./calendarSyncHandler
 
-      - name: Check for errors
-        if: failure()
+      - name: Push changes to GitHub
+        if: success()
         run: |
-          echo "::error::Calendar sync failed. Check logs for details."
-          exit 1
+          git add calendar.html
+          git commit -m "Automated update of calendar"
+          git push origin main
