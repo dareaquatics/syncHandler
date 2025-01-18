@@ -2,11 +2,12 @@ name: Update Calendar
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *" # Runs daily at midnight UTC
+    - cron: "0 0 * * *" # Runs daily at midnight
 
 jobs:
   update-calendar:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -21,6 +22,13 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Initialize Go Module
+        run: |
+          if [ ! -f go.mod ]; then
+            echo "module github.com/dareaquatics/dare-website" > go.mod
+            echo "go 1.23" >> go.mod
+          fi
 
       - name: Install dependencies
         run: |
