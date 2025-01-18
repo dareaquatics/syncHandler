@@ -1,19 +1,17 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
 	"github.com/apognu/gocal"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	gitHTTP "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 const (
@@ -69,7 +67,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &http.BasicAuth{
+		Auth: &gitHTTP.BasicAuth{
 			Username: "git",
 			Password: token,
 		},
@@ -90,8 +88,15 @@ func fetchEvents() ([]Event, error) {
 	}
 	defer resp.Body.Close()
 	parser := gocal.NewParser(resp.Body)
-	parser.Start = time.Now().AddDate(-1, 0, 0) // Get events from last year
-	parser.End = time.Now().AddDate(1, 0, 0)    // Get events until next year
+
+	// Use pointers to time for Start and End
+	loc, _ := time.LoadLocation(timezone)
+	now := time.Now().In(loc)
+
+	// Using pointers to time for Start and End
+	parser.Start = &time.Time{now.AddDate(-1, 0, 0)} // 1 year before now
+	parser.End = &time.Time{now.AddDate(1, 0, 0)}   // 1 year after now
+
 	err = parser.Parse()
 	if err != nil {
 		return nil, fmt.Errorf("error parsing ICS: %v", err)
@@ -100,10 +105,10 @@ func fetchEvents() ([]Event, error) {
 	for _, e := range parser.Events {
 		events = append(events, Event{
 			Title:       e.Summary,
-			Start:      e.Start,
-			End:        e.End,
+			Start:       *e.Start, // Dereferencing pointer to get the value
+			End:         *e.End,   // Dereferencing pointer to get the value
 			Description: e.Description,
-			URL:        "#",
+			URL:         "#", // You can adjust the URL if needed
 		})
 	}
 	return events, nil
@@ -192,7 +197,7 @@ func pushToGithub() error {
 		return fmt.Errorf("error committing changes: %v", err)
 	}
 	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
+		Auth: &gitHTTP.BasicAuth{
 			Username: "git",
 			Password: token,
 		},
