@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
+	"net/http" 
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http" 
 )
 
 const (
@@ -67,7 +67,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &http.BasicAuth{
+		Auth: &githttp.BasicAuth{ // Now using 'githttp.BasicAuth' due to import alias
 			Username: "git",
 			Password: token,
 		},
@@ -210,7 +210,7 @@ func pushToGithub() error {
 		return fmt.Errorf("error committing changes: %v", err)
 	}
 	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
+		Auth: &githttp.BasicAuth{ // Now using 'githttp.BasicAuth' due to import alias
 			Username: "git",
 			Password: token,
 		},
