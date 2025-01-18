@@ -2,21 +2,19 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/plumbing/transport/http" // Renamed to gitHttp
 )
 
 const (
@@ -75,7 +73,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &http.BasicAuth{
+		Auth: &gitHttp.BasicAuth{ // Renamed http to gitHttp
 			Username: "git",
 			Password: token,
 		},
@@ -156,7 +154,7 @@ func fetchArticleContent(url string) (NewsItem, error) {
 	}
 
 	if dateStr, exists := doc.Find("span.DateStr").Attr("data"); exists {
-		timestamp, err := strconv.ParseInt(dateStr, 10, 64)
+		timestamp, err := strconv.ParseInt(dateStr, 10, 64) // Fixed strconv undefined issue
 		if err == nil {
 			date := time.Unix(timestamp/1000, 0)
 			newsItem.Date = date.Format("January 02, 2006")
@@ -264,7 +262,7 @@ func pushToGithub() error {
 	}
 
 	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
+		Auth: &gitHttp.BasicAuth{ // Renamed http to gitHttp
 			Username: "git",
 			Password: token,
 		},
