@@ -88,31 +88,38 @@ func fetchEvents() ([]Event, error) {
 	}
 	defer resp.Body.Close()
 	parser := gocal.NewParser(resp.Body)
-
-	// Use pointers to time for Start and End
-	loc, _ := time.LoadLocation(timezone)
-	now := time.Now().In(loc)
-
-	// Using pointers to time for Start and End
-	parser.Start = &time.Time{now.AddDate(-1, 0, 0)} // 1 year before now
-	parser.End = &time.Time{now.AddDate(1, 0, 0)}   // 1 year after now
-
+	parser.Start = time.Now().AddDate(-1, 0, 0) // Get events from last year
+	parser.End = time.Now().AddDate(1, 0, 0)    // Get events until next year
 	err = parser.Parse()
 	if err != nil {
 		return nil, fmt.Errorf("error parsing ICS: %v", err)
 	}
+
 	var events []Event
 	for _, e := range parser.Events {
+		// Dereference pointers and handle missing start/end times
+		var startTime time.Time
+		var endTime time.Time
+
+		if e.Start != nil {
+			startTime = *e.Start // Dereference the pointer to get the value
+		}
+
+		if e.End != nil {
+			endTime = *e.End // Dereference the pointer to get the value
+		}
+
 		events = append(events, Event{
 			Title:       e.Summary,
-			Start:       *e.Start, // Dereferencing pointer to get the value
-			End:         *e.End,   // Dereferencing pointer to get the value
+			Start:       startTime,
+			End:         endTime,
 			Description: e.Description,
-			URL:         "#", // You can adjust the URL if needed
+			URL:         "#",
 		})
 	}
 	return events, nil
 }
+
 
 func generateHTML(events []Event) (string, error) {
 	now := time.Now()
