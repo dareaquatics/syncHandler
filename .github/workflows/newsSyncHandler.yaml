@@ -11,29 +11,33 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'
           cache: true
+
       - name: Set up Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Install dependencies
         run: |
-          go mod init news-sync
           go get github.com/go-git/go-git/v5
           go get github.com/PuerkitoBio/goquery
-          go get -d ./...
-          go mod tidy
+          go mod tidy # Ensure dependencies are correctly resolved
+
       - name: Build
-        run: go build -v ./newsSyncHandler.go
+        run: go build -v .
+
       - name: Run the script
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           ./newsSyncHandler
+
       - name: Check for errors
         if: failure()
         run: |
