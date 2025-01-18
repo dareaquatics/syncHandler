@@ -1,3 +1,5 @@
+package main
+
 import (
 	"bytes"
 	"encoding/json"
@@ -13,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
+
 const (
 	githubRepo    = "https://github.com/dareaquatics/dare-website"
 	icsURL        = "https://www.gomotionapp.com/rest/ics/system/5/Events.ics?key=l4eIgFXwqEbxbQz42YjRgg%3D%3D&enabled=false&tz=America%2FLos_Angeles"
@@ -22,6 +25,7 @@ const (
 	startMarker   = "<!-- START UNDER HERE -->"
 	endMarker     = "<!-- END AUTOMATION SCRIPT -->"
 )
+
 type Event struct {
 	Title       string    `json:"title"`
 	Start       time.Time `json:"start"`
@@ -29,6 +33,7 @@ type Event struct {
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
 }
+
 func checkGithubToken() error {
 	token := os.Getenv("PAT_TOKEN")
 	if token == "" {
@@ -50,6 +55,7 @@ func checkGithubToken() error {
 	}
 	return nil
 }
+
 func cloneRepository() error {
 	token := os.Getenv("PAT_TOKEN")
 	currentDir, err := os.Getwd()
@@ -76,6 +82,7 @@ func cloneRepository() error {
 	}
 	return nil
 }
+
 func fetchEvents() ([]Event, error) {
 	resp, err := http.Get(icsURL)
 	if err != nil {
@@ -101,6 +108,7 @@ func fetchEvents() ([]Event, error) {
 	}
 	return events, nil
 }
+
 func generateHTML(events []Event) (string, error) {
 	now := time.Now()
 	var upcomingEvents, pastEvents strings.Builder
@@ -149,6 +157,7 @@ func generateHTML(events []Event) (string, error) {
 	}
 	return finalHTML.String(), nil
 }
+
 func updateHTMLFile(eventHTML string) error {
 	content, err := os.ReadFile(eventsFile)
 	if err != nil {
@@ -163,6 +172,7 @@ func updateHTMLFile(eventHTML string) error {
 	updatedContent := contentStr[:startIdx] + "\n" + eventHTML + "\n" + contentStr[endIdx:]
 	return os.WriteFile(eventsFile, []byte(updatedContent), 0644)
 }
+
 func pushToGithub() error {
 	token := os.Getenv("PAT_TOKEN")
 	repo, err := git.PlainOpen(".")
@@ -192,6 +202,7 @@ func pushToGithub() error {
 	}
 	return nil
 }
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Starting update process...")
