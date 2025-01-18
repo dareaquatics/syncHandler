@@ -11,7 +11,7 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/go-git/go-git/v5"
-	gitHTTP "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 const (
@@ -67,7 +67,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &gitHTTP.BasicAuth{
+		Auth: &http.BasicAuth{
 			Username: "git",
 			Password: token,
 		},
@@ -88,8 +88,15 @@ func fetchEvents() ([]Event, error) {
 	}
 	defer resp.Body.Close()
 	parser := gocal.NewParser(resp.Body)
-	parser.Start = time.Now().AddDate(-1, 0, 0) // Get events from last year
-	parser.End = time.Now().AddDate(1, 0, 0)    // Get events until next year
+
+	// Create pointers to time.Time for Start and End
+	startTime := time.Now().AddDate(-1, 0, 0) // Get events from last year
+	endTime := time.Now().AddDate(1, 0, 0)    // Get events until next year
+
+	// Assign the pointer values to parser.Start and parser.End
+	parser.Start = &startTime
+	parser.End = &endTime
+	
 	err = parser.Parse()
 	if err != nil {
 		return nil, fmt.Errorf("error parsing ICS: %v", err)
@@ -119,7 +126,6 @@ func fetchEvents() ([]Event, error) {
 	}
 	return events, nil
 }
-
 
 func generateHTML(events []Event) (string, error) {
 	now := time.Now()
@@ -204,7 +210,7 @@ func pushToGithub() error {
 		return fmt.Errorf("error committing changes: %v", err)
 	}
 	err = repo.Push(&git.PushOptions{
-		Auth: &gitHTTP.BasicAuth{
+		Auth: &http.BasicAuth{
 			Username: "git",
 			Password: token,
 		},
