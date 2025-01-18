@@ -1,10 +1,6 @@
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,7 +8,9 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/plumbing/transport/http" 
+	"net/http"
+	"strconv" 
 )
 
 const (
@@ -73,7 +71,7 @@ func cloneRepository() error {
 	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      githubRepo,
 		Progress: os.Stdout,
-		Auth: &http.BasicAuth{
+		Auth: &http.BasicAuth{ // Correctly using the aliased 'http' package
 			Username: "git",
 			Password: token,
 		},
@@ -208,50 +206,4 @@ func pushToGithub() error {
 	}
 
 	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
-			Username: "git",
-			Password: token,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("error pushing changes: %v", err)
-	}
-	return nil
-}
-
-func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Starting update process...")
-
-	if err := checkGithubToken(); err != nil {
-		log.Fatalf("GitHub token validation failed: %v", err)
-	}
-
-	if err := cloneRepository(); err != nil {
-		log.Fatalf("Repository cloning failed: %v", err)
-	}
-
-	events, err := fetchEvents()
-	if err != nil {
-		log.Fatalf("Event fetching failed: %v", err)
-	}
-
-	if len(events) == 0 {
-		log.Fatal("No events fetched")
-	}
-
-	eventHTML, err := generateHTML(events)
-	if err != nil {
-		log.Fatalf("HTML generation failed: %v", err)
-	}
-
-	if err := updateHTMLFile(eventHTML); err != nil {
-		log.Fatalf("HTML file update failed: %v", err)
-	}
-
-	if err := pushToGithub(); err != nil {
-		log.Fatalf("GitHub push failed: %v", err)
-	}
-
-	log.Println("Update process completed successfully")
-}
+		Auth: &http.BasicAuth{ // Correctly using the aliased 'http' package
