@@ -1,3 +1,6 @@
 syncHandler
 
 Experimental sync handlers for dareaquatics.com written in Go. 
+
+https://dareaquatics.github.io/syncHandler/calendar
+https://dareaquatics.github.io/syncHandler/news
