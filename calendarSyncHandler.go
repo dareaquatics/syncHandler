@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http" 
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,15 +11,18 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/go-git/go-git/v5"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http" 
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 const (
+	// GitHub repository constants
 	githubRepo    = "https://github.com/dareaquatics/dare-website"
-	icsURL        = "https://www.gomotionapp.com/rest/ics/system/5/Events.ics?key=l4eIgFXwqEbxbQz42YjRgg%3D%3D&enabled=false&tz=America%2FLos_Angeles"
 	repoName      = "dare-website"
 	eventsFile    = "calendar.html"
 	timezone      = "America/Los_Angeles"
+	icsURL        = "https://www.gomotionapp.com/rest/ics/system/5/Events.ics?key=l4eIgFXwqEbxbQz42YjRgg%3D%3D&enabled=false&tz=America%2FLos_Angeles"
+
+	// HTML content markers
 	startMarker   = "<!-- START UNDER HERE -->"
 	endMarker     = "<!-- END AUTOMATION SCRIPT -->"
 )
