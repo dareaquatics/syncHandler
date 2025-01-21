@@ -8,6 +8,7 @@ on:
 jobs:
   update-news:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -23,14 +24,19 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Initialize Go modules
+        run: |
+          if [ ! -f go.mod ]; then
+            go mod init
+          fi
+
       - name: Install dependencies
         run: |
-          go get github.com/go-git/go-git/v5
-          go get github.com/PuerkitoBio/goquery
           go mod tidy # Ensure dependencies are correctly resolved
 
-      - name: Build
-        run: go build -v .
+      - name: Build the Go application
+        run: |
+          go build -v ./newsSyncHandler.go # We are building the correct file
 
       - name: Run the script
         env:
