@@ -1,25 +1,25 @@
-name: Update Calendar
+name: Sync Calendar
 
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 0 * * *" # Runs daily at midnight
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight
 
 jobs:
   update-calendar:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: checkout repository
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Set up Go
+      - name: set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'
 
-      - name: Cache Go modules
+      - name: cache Go modules
         uses: actions/cache@v3
         with:
           path: |
@@ -29,15 +29,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Install dependencies
+      - name: install dependencies
         run: go mod tidy
 
-      - name: Set up Git
+      - name: set up Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Run sync
+      - name: run sync handler
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: go run calendarSyncHandler.go
