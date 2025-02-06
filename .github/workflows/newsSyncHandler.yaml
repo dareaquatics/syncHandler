@@ -3,7 +3,7 @@ name: Update News
 on:
   workflow_dispatch:
   #schedule:
-  #  - cron: "0 */2 * * *" # Runs every 2 hours
+    #- cron: "0 */2 * * *" # Runs every 2 hours
 
 jobs:
   update-news:
@@ -30,7 +30,9 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install dependencies
-        run: go mod tidy
+        run: |
+          go mod tidy
+          go mod download
 
       - name: Set up Git
         run: |
