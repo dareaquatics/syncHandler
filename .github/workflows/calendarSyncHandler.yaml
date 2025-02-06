@@ -1,54 +1,43 @@
 name: Update Calendar
+
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: "0 0 * * *" # Runs daily at midnight
+  #schedule:
+  #  - cron: "0 0 * * *" # Runs daily at midnight
 
 jobs:
   update-calendar:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23'
-          cache: true
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            .go-bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod tidy
 
       - name: Set up Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Initialize Go Module
-        run: |
-          if [ ! -f go.mod ]; then
-            echo "module github.com/dareaquatics/dare-website" > go.mod
-            echo "go 1.23" >> go.mod
-          fi
-
-      - name: Install dependencies
-        run: |
-          go mod tidy
-          go get github.com/go-git/go-git/v5
-          go get github.com/apognu/gocal
-          go get -d ./...
-
-      - name: Build
-        run: go build -v ./calendarSyncHandler.go
-
-      - name: Run the script
+      - name: Run sync
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          ./calendarSyncHandler
-
-      - name: Push changes to GitHub
-        if: success()
-        run: |
-          git add calendar.html
-          git commit -m "Automated update of calendar"
-          git push origin main
+        run: go run calendarSyncHandler.go
