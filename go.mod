@@ -4,9 +4,9 @@ go 1.23
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.1
-	github.com/apognu/gocal v0.9.0
-	github.com/sirupsen/logrus v1.9.3
-	gopkg.in/src-d/go-git.v4 v4.13.1
+	github.com/apognu/gocal v0.16.0
+	github.com/go-git/go-git/v5 v5.12.0
+	github.com/sirupsen/logrus v1.9.4
 )
 
 require (
