@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -197,7 +197,7 @@ func formatDate(timestamp string) string {
 		return "Unknown Date"
 	}
 
-	t, err := time.Parse("2006-01-02", time.Unix(0, 0).Format("2006-01-02"))
+	t, err := time.Parse(time.RFC3339, timestamp)
 	if err == nil {
 		return t.Format(timeFormat)
 	}
