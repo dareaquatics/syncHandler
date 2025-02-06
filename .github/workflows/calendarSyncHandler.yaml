@@ -2,8 +2,8 @@ name: Update Calendar
 
 on:
   workflow_dispatch:
-  #schedule:
-  #  - cron: "0 0 * * *" # Runs daily at midnight
+#  schedule:
+#    - cron: "0 0 * * *" # Runs daily at midnight
 
 jobs:
   update-calendar:
@@ -25,7 +25,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             .go-bin
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('go.mod') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
