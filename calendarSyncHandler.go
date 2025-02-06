@@ -2,253 +2,238 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"io"
 	"net/http"
 	"os"
-	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/apognu/gocal"
-	"github.com/go-git/go-git/v5"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/sirupsen/logrus"
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	gitHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
 
 const (
-	// GitHub repository constants
-	githubRepo    = "https://github.com/dareaquatics/dare-website"
-	repoName      = "dare-website"
-	eventsFile    = "calendar.html"
-	timezone      = "America/Los_Angeles"
 	icsURL        = "https://www.gomotionapp.com/rest/ics/system/5/Events.ics?key=l4eIgFXwqEbxbQz42YjRgg%3D%3D&enabled=false&tz=America%2FLos_Angeles"
-
-	// HTML content markers
+	timezone      = "America/Los_Angeles"
+	eventsHTML    = "calendar.html"
 	startMarker   = "<!-- START UNDER HERE -->"
 	endMarker     = "<!-- END AUTOMATION SCRIPT -->"
+	commitMessage = "automated commit: sync TeamUnify calendar [skip ci]"
 )
 
-type Event struct {
-	Title       string    `json:"title"`
-	Start       time.Time `json:"start"`
-	End         time.Time `json:"end"`
-	Description string    `json:"description"`
-	URL         string    `json:"url"`
+func main() {
+	log := setupLogger()
+	log.Info("Starting calendar sync process")
+
+	if os.Getenv("PAT_TOKEN") == "" {
+		log.Fatal("Missing PAT_TOKEN environment variable")
+	}
+
+	events, err := fetchEvents(log)
+	if err != nil {
+		log.Fatalf("Failed to fetch events: %v", err)
+	}
+
+	htmlContent := generateHTML(events, log)
+	modified, err := updateHTMLContent(htmlContent, log)
+	if err != nil {
+		log.Fatalf("Failed to update HTML: %v", err)
+	}
+
+	if modified {
+		if err := gitCommitAndPush(log); err != nil {
+			log.Fatalf("Failed to commit changes: %v", err)
+		}
+	}
+
+	log.Info("Sync process completed successfully")
 }
 
-func checkGithubToken() error {
-	token := os.Getenv("PAT_TOKEN")
-	if token == "" {
-		return fmt.Errorf("PAT_TOKEN environment variable not set")
-	}
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-	req.Header.Add("Authorization", "token "+token)
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error validating token: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid GitHub token")
-	}
-	return nil
-}
-
-func cloneRepository() error {
-	token := os.Getenv("PAT_TOKEN")
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting current directory: %v", err)
-	}
-	repoPath := filepath.Join(currentDir, repoName)
-	if _, err := os.Stat(repoPath); !os.IsNotExist(err) {
-		os.RemoveAll(repoPath)
-	}
-	_, err = git.PlainClone(repoPath, false, &git.CloneOptions{
-		URL:      githubRepo,
-		Progress: os.Stdout,
-		Auth: &githttp.BasicAuth{ // Now using 'githttp.BasicAuth' due to import alias
-			Username: "git",
-			Password: token,
-		},
+func setupLogger() *logrus.Logger {
+	log := logrus.New()
+	log.SetFormatter(&logrus.TextFormatter{
+		ForceColors:   true,
+		FullTimestamp: true,
 	})
-	if err != nil {
-		return fmt.Errorf("error cloning repository: %v", err)
-	}
-	if err := os.Chdir(repoPath); err != nil {
-		return fmt.Errorf("error changing directory: %v", err)
-	}
-	return nil
+	log.SetLevel(logrus.InfoLevel)
+	return log
 }
 
-func fetchEvents() ([]Event, error) {
+func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
+	log.Info("Fetching ICS data")
 	resp, err := http.Get(icsURL)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching ICS: %v", err)
+		return nil, fmt.Errorf("ICS fetch failed: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		return nil, fmt.Errorf("timezone load failed: %w", err)
+	}
+
 	parser := gocal.NewParser(resp.Body)
-
-	// Create pointers to time.Time for Start and End
-	startTime := time.Now().AddDate(-1, 0, 0) // Get events from last year
-	endTime := time.Now().AddDate(1, 0, 0)    // Get events until next year
-
-	// Assign the pointer values to parser.Start and parser.End
-	parser.Start = &startTime
-	parser.End = &endTime
-	
-	err = parser.Parse()
-	if err != nil {
-		return nil, fmt.Errorf("error parsing ICS: %v", err)
+	if err := parser.Parse(); err != nil {
+		return nil, fmt.Errorf("ICS parse failed: %w", err)
 	}
 
-	var events []Event
-	for _, e := range parser.Events {
-		// Dereference pointers and handle missing start/end times
-		var startTime time.Time
-		var endTime time.Time
-
-		if e.Start != nil {
-			startTime = *e.Start // Dereference the pointer to get the value
-		}
-
-		if e.End != nil {
-			endTime = *e.End // Dereference the pointer to get the value
-		}
-
-		events = append(events, Event{
-			Title:       e.Summary,
-			Start:       startTime,
-			End:         endTime,
-			Description: e.Description,
-			URL:         "#",
-		})
+	for i := range parser.Events {
+		parser.Events[i].Start = parser.Events[i].Start.In(loc)
+		parser.Events[i].End = parser.Events[i].End.In(loc)
 	}
-	return events, nil
+
+	sort.Slice(parser.Events, func(i, j int) bool {
+		return parser.Events[i].Start.Before(parser.Events[j].Start)
+	})
+
+	log.Infof("Processed %d events", len(parser.Events))
+	return parser.Events, nil
 }
 
-func generateHTML(events []Event) (string, error) {
-	now := time.Now()
-	var upcomingEvents, pastEvents strings.Builder
+func generateHTML(events []gocal.Event, log *logrus.Logger) string {
+	log.Info("Generating HTML content")
+	var upcoming, past strings.Builder
+	now := time.Now().In(time.UTC)
+
 	for _, event := range events {
-		eventHTML := fmt.Sprintf(`
-        <div class="event">
-          <h2><strong>%s</strong></h2>
-          <p><b>Event Start:</b> %s</p>
-          <p><b>Event End:</b> %s</p>
-          <br>
-          <p>Click the button below for more information.</p>
-          <a href="https://www.gomotionapp.com/team/cadas/controller/cms/admin/index?team=cadas#/calendar-team-events" target="_blank" rel="noopener noreferrer" class="btn btn-primary">More Details</a>
-        </div>
-        <br><br>
-        `, event.Title, event.Start.Format("January 02, 2006"), event.End.Format("January 02, 2006"))
+		html := fmt.Sprintf(`
+		<div class="event">
+		  <h2><strong>%s</strong></h2>
+		  <p><b>Event Start:</b> %s</p>
+		  <p><b>Event End:</b> %s</p>
+		  <br>
+		  <p>Click the button below for more information.</p>
+		  <a href="https://www.gomotionapp.com/team/cadas/controller/cms/admin/index?team=cadas#/calendar-team-events" 
+		     target="_blank" 
+		     rel="noopener noreferrer" 
+		     class="btn btn-primary">
+		    More Details
+		  </a>
+		</div>
+		<br><br>`,
+			event.Summary,
+			event.Start.Format("January 02, 2006"),
+			event.End.Format("January 02, 2006"),
+		)
+
 		if event.End.Before(now) {
-			pastEvents.WriteString(eventHTML)
+			past.WriteString(html)
 		} else {
-			upcomingEvents.WriteString(eventHTML)
+			upcoming.WriteString(html)
 		}
 	}
-	var finalHTML strings.Builder
-	finalHTML.WriteString(upcomingEvents.String())
-	if pastEvents.Len() > 0 {
-		finalHTML.WriteString(`
-        <button type="button" class="collapsible">Click for Past Events</button>
-        <div class="content" style="display: none;">
-          ` + pastEvents.String() + `
-        </div>
-        <br>
-        <script>
-        var coll = document.getElementsByClassName("collapsible");
-        for (var i = 0; i < coll.length; i++) {
-          coll[i].addEventListener("click", function() {
-            this.classList.toggle("active");
-            var content = this.nextElementSibling;
-            if (content.style.display === "block") {
-              content.style.display = "none";
-            } else {
-              content.style.display = "block";
-            }
-          });
-        }
-        </script>
-        `)
+
+	var content strings.Builder
+	content.WriteString(upcoming.String())
+
+	if past.Len() > 0 {
+		content.WriteString(`
+		<button type="button" class="collapsible">Click for Past Events</button>
+		<div class="content" style="display: none;">`)
+		content.WriteString(past.String())
+		content.WriteString(`
+		</div>
+		<br>
+		<script>
+		  document.querySelectorAll('.collapsible').forEach(button => {
+		    button.addEventListener('click', () => {
+		      const content = button.nextElementSibling;
+		      content.style.display = content.style.display === 'block' ? 'none' : 'block';
+		    });
+		  });
+		</script>`)
 	}
-	return finalHTML.String(), nil
+
+	return content.String()
 }
 
-func updateHTMLFile(eventHTML string) error {
-	content, err := os.ReadFile(eventsFile)
+func updateHTMLContent(newContent string, log *logrus.Logger) (bool, error) {
+	log.Info("Updating HTML file")
+	file, err := os.OpenFile(eventsHTML, os.O_RDWR, 0644)
 	if err != nil {
-		return fmt.Errorf("error reading HTML file: %v", err)
+		return false, fmt.Errorf("file open failed: %w", err)
 	}
-	contentStr := string(content)
-	startIdx := strings.Index(contentStr, startMarker) + len(startMarker)
-	endIdx := strings.Index(contentStr, endMarker)
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return false, fmt.Errorf("file read failed: %w", err)
+	}
+
+	html := string(content)
+	startIdx := strings.Index(html, startMarker) + len(startMarker)
+	endIdx := strings.Index(html, endMarker)
+
 	if startIdx == -1 || endIdx == -1 {
-		return fmt.Errorf("markers not found in HTML file")
+		return false, fmt.Errorf("markers not found in HTML")
 	}
-	updatedContent := contentStr[:startIdx] + "\n" + eventHTML + "\n" + contentStr[endIdx:]
-	return os.WriteFile(eventsFile, []byte(updatedContent), 0644)
+
+	updated := html[:startIdx] + "\n" + newContent + "\n" + html[endIdx:]
+	if updated == html {
+		log.Info("No changes detected")
+		return false, nil
+	}
+
+	if err := file.Truncate(0); err != nil {
+		return false, fmt.Errorf("file truncate failed: %w", err)
+	}
+
+	if _, err := file.Seek(0, 0); err != nil {
+		return false, fmt.Errorf("file seek failed: %w", err)
+	}
+
+	if _, err := file.WriteString(updated); err != nil {
+		return false, fmt.Errorf("file write failed: %w", err)
+	}
+
+	log.Info("HTML file updated successfully")
+	return true, nil
 }
 
-func pushToGithub() error {
-	token := os.Getenv("PAT_TOKEN")
+func gitCommitAndPush(log *logrus.Logger) error {
+	log.Info("Committing changes to Git")
 	repo, err := git.PlainOpen(".")
 	if err != nil {
-		return fmt.Errorf("error opening repository: %v", err)
+		return fmt.Errorf("repo open failed: %w", err)
 	}
-	w, err := repo.Worktree()
+
+	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("error getting worktree: %v", err)
+		return fmt.Errorf("worktree access failed: %w", err)
 	}
-	_, err = w.Add(eventsFile)
-	if err != nil {
-		return fmt.Errorf("error staging files: %v", err)
+
+	if _, err := wt.Add(eventsHTML); err != nil {
+		return fmt.Errorf("git add failed: %w", err)
 	}
-	_, err = w.Commit("automated commit: sync TeamUnify calendar [skip ci]", &git.CommitOptions{})
-	if err != nil {
-		return fmt.Errorf("error committing changes: %v", err)
-	}
-	err = repo.Push(&git.PushOptions{
-		Auth: &githttp.BasicAuth{ // Now using 'githttp.BasicAuth' due to import alias
-			Username: "git",
-			Password: token,
+
+	_, err = wt.Commit(commitMessage, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "github-actions[bot]",
+			Email: "github-actions[bot]@users.noreply.github.com",
+			When:  time.Now(),
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error pushing changes: %v", err)
+		return fmt.Errorf("commit failed: %w", err)
 	}
-	return nil
-}
 
-func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Starting update process...")
-	if err := checkGithubToken(); err != nil {
-		log.Fatalf("GitHub token validation failed: %v", err)
+	auth := &gitHttp.BasicAuth{
+		Username: "github-actions",
+		Password: os.Getenv("PAT_TOKEN"),
 	}
-	if err := cloneRepository(); err != nil {
-		log.Fatalf("Repository cloning failed: %v", err)
+
+	if err := repo.Push(&git.PushOptions{Auth: auth}); err != nil {
+		return fmt.Errorf("push failed: %w", err)
 	}
-	events, err := fetchEvents()
-	if err != nil {
-		log.Fatalf("Event fetching failed: %v", err)
-	}
-	if len(events) == 0 {
-		log.Fatal("No events fetched")
-	}
-	eventHTML, err := generateHTML(events)
-	if err != nil {
-		log.Fatalf("HTML generation failed: %v", err)
-	}
-	if err := updateHTMLFile(eventHTML); err != nil {
-		log.Fatalf("HTML file update failed: %v", err)
-	}
-	if err := pushToGithub(); err != nil {
-		log.Fatalf("GitHub push failed: %v", err)
-	}
-	log.Println("Update process completed successfully")
+
+	log.Info("Changes pushed successfully")
+	return nil
 }
