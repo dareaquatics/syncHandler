@@ -27,30 +27,30 @@ const (
 
 func main() {
 	log := setupLogger()
-	log.Info("Starting calendar sync process")
+	log.Info("starting calendar sync process")
 
 	if os.Getenv("PAT_TOKEN") == "" {
-		log.Fatal("Missing PAT_TOKEN environment variable")
+		log.Fatal("missing PAT_TOKEN environment variable")
 	}
 
 	events, err := fetchEvents(log)
 	if err != nil {
-		log.Fatalf("Failed to fetch events: %v", err)
+		log.Fatalf("failed to fetch events: %v", err)
 	}
 
 	htmlContent := generateHTML(events, log)
 	modified, err := updateHTMLContent(htmlContent, log)
 	if err != nil {
-		log.Fatalf("Failed to update HTML: %v", err)
+		log.Fatalf("failed to update html: %v", err)
 	}
 
 	if modified {
 		if err := gitCommitAndPush(log); err != nil {
-			log.Fatalf("Failed to commit changes: %v", err)
+			log.Fatalf("failed to commit changes: %v", err)
 		}
 	}
 
-	log.Info("Sync process completed successfully")
+	log.Info("sync process completed successfully")
 }
 
 func setupLogger() *logrus.Logger {
@@ -64,10 +64,10 @@ func setupLogger() *logrus.Logger {
 }
 
 func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
-	log.Info("Fetching ICS data")
+	log.Info("fetching ics data")
 	resp, err := http.Get(icsURL)
 	if err != nil {
-		return nil, fmt.Errorf("ICS fetch failed: %w", err)
+		return nil, fmt.Errorf("ics fetch failed: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -82,7 +82,7 @@ func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
 
 	parser := gocal.NewParser(resp.Body)
 	if err := parser.Parse(); err != nil {
-		return nil, fmt.Errorf("ICS parse failed: %w", err)
+		return nil, fmt.Errorf("ics parse failed: %w", err)
 	}
 
 	for i := range parser.Events {
@@ -96,17 +96,29 @@ func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
 		return parser.Events[i].Start.Before(*parser.Events[j].Start)
 	})
 
-	log.Infof("Processed %d events", len(parser.Events))
+	log.Infof("processed %d events", len(parser.Events))
 	return parser.Events, nil
 }
 
 func generateHTML(events []gocal.Event, log *logrus.Logger) string {
-	log.Info("Generating HTML content")
-	var upcoming, past strings.Builder
+	log.Info("generating html content")
+	
+	if len(events) == 0 {
+		return `<div class="event"><p>No upcoming events published.</p></div>`
+	}
+
+	var content strings.Builder
 	now := time.Now().In(time.UTC)
+	hasUpcoming := false
 
 	for _, event := range events {
-		html := fmt.Sprintf(`
+		// Skip past events
+		if event.End.Before(now) {
+			continue
+		}
+
+		hasUpcoming = true
+		content.WriteString(fmt.Sprintf(`
 		<div class="event">
 		  <h2><strong>%s</strong></h2>
 		  <p><b>Event Start:</b> %s</p>
@@ -124,41 +136,18 @@ func generateHTML(events []gocal.Event, log *logrus.Logger) string {
 			event.Summary,
 			event.Start.Format("January 02, 2006"),
 			event.End.Format("January 02, 2006"),
-		)
-
-		if event.End.Before(now) {
-			past.WriteString(html)
-		} else {
-			upcoming.WriteString(html)
-		}
+		))
 	}
 
-	var content strings.Builder
-	content.WriteString(upcoming.String())
-
-	if past.Len() > 0 {
-		content.WriteString(`
-		<button type="button" class="collapsible">Click for Past Events</button>
-		<div class="content" style="display: none;">`)
-		content.WriteString(past.String())
-		content.WriteString(`
-		</div>
-		<br>
-		<script>
-		  document.querySelectorAll('.collapsible').forEach(button => {
-		    button.addEventListener('click', () => {
-		      const content = button.nextElementSibling;
-		      content.style.display = content.style.display === 'block' ? 'none' : 'block';
-		    });
-		  });
-		</script>`)
+	if !hasUpcoming {
+		content.WriteString(`<div class="event"><p>No upcoming events published.</p></div>`)
 	}
 
 	return content.String()
 }
 
 func updateHTMLContent(newContent string, log *logrus.Logger) (bool, error) {
-	log.Info("Updating HTML file")
+	log.Info("updating html file")
 	file, err := os.OpenFile(eventsHTML, os.O_RDWR, 0644)
 	if err != nil {
 		return false, fmt.Errorf("file open failed: %w", err)
@@ -175,12 +164,12 @@ func updateHTMLContent(newContent string, log *logrus.Logger) (bool, error) {
 	endIdx := strings.Index(html, endMarker)
 
 	if startIdx == -1 || endIdx == -1 {
-		return false, fmt.Errorf("markers not found in HTML")
+		return false, fmt.Errorf("markers not found in html")
 	}
 
 	updated := html[:startIdx] + "\n" + newContent + "\n" + html[endIdx:]
 	if updated == html {
-		log.Info("No changes detected")
+		log.Info("no changes detected")
 		return false, nil
 	}
 
@@ -196,12 +185,12 @@ func updateHTMLContent(newContent string, log *logrus.Logger) (bool, error) {
 		return false, fmt.Errorf("file write failed: %w", err)
 	}
 
-	log.Info("HTML file updated successfully")
+	log.Info("html file updated successfully")
 	return true, nil
 }
 
 func gitCommitAndPush(log *logrus.Logger) error {
-	log.Info("Committing changes to Git")
+	log.Info("committing changes to git")
 	repo, err := git.PlainOpen(".")
 	if err != nil {
 		return fmt.Errorf("repo open failed: %w", err)
@@ -236,6 +225,6 @@ func gitCommitAndPush(log *logrus.Logger) error {
 		return fmt.Errorf("push failed: %w", err)
 	}
 
-	log.Info("Changes pushed successfully")
+	log.Info("changes pushed successfully")
 	return nil
 }
