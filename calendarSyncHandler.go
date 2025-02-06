@@ -86,12 +86,14 @@ func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
 	}
 
 	for i := range parser.Events {
-		parser.Events[i].Start = parser.Events[i].Start.In(loc)
-		parser.Events[i].End = parser.Events[i].End.In(loc)
+		start := parser.Events[i].Start.In(loc)
+		end := parser.Events[i].End.In(loc)
+		parser.Events[i].Start = &start
+		parser.Events[i].End = &end
 	}
 
 	sort.Slice(parser.Events, func(i, j int) bool {
-		return parser.Events[i].Start.Before(parser.Events[j].Start)
+		return parser.Events[i].Start.Before(*parser.Events[j].Start)
 	})
 
 	log.Infof("Processed %d events", len(parser.Events))
