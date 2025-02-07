@@ -1,8 +1,8 @@
 name: Sync News
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 */2 * * *" # Runs every 2 hours
+#  schedule:
+#    - cron: "0 */2 * * *" # Runs every 2 hours
 
 jobs:
   update-news:
