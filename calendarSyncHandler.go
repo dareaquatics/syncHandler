@@ -11,9 +11,9 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/sirupsen/logrus"
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	gitHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 const (
@@ -31,6 +31,11 @@ func main() {
 
 	if os.Getenv("PAT_TOKEN") == "" {
 		log.Fatal("missing PAT_TOKEN environment variable")
+	}
+
+	// Change working directory to repository root
+	if err := os.Chdir("../../"); err != nil {
+		log.Fatalf("failed to change directory: %v", err)
 	}
 
 	events, err := fetchEvents(log)
@@ -102,7 +107,7 @@ func fetchEvents(log *logrus.Logger) ([]gocal.Event, error) {
 
 func generateHTML(events []gocal.Event, log *logrus.Logger) string {
 	log.Info("generating html content")
-	
+
 	if len(events) == 0 {
 		return `<div class="event"><p>No upcoming events published.</p></div>`
 	}
@@ -191,7 +196,7 @@ func updateHTMLContent(newContent string, log *logrus.Logger) (bool, error) {
 
 func gitCommitAndPush(log *logrus.Logger) error {
 	log.Info("committing changes to git")
-	repo, err := git.PlainOpen(".")
+	repo, err := git.PlainOpen(".") 
 	if err != nil {
 		return fmt.Errorf("repo open failed: %w", err)
 	}
