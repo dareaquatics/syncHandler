@@ -7,15 +7,16 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/sirupsen/logrus"
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	gitHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 const (
@@ -49,6 +50,11 @@ func main() {
 
 	if os.Getenv("PAT_TOKEN") == "" {
 		log.Fatal("missing PAT_TOKEN environment variable")
+	}
+
+	// Change working directory to repository root
+	if err := os.Chdir("../../"); err != nil {
+		log.Fatalf("failed to change directory: %v", err)
 	}
 
 	articleURLs, err := fetchArticleURLs()
@@ -185,22 +191,48 @@ func fetchArticle(articleURL string) (Article, error) {
 
 	return Article{
 		Title:   strings.TrimSpace(title),
-		Date:    formatDate(dateStr),
+		Date:    formatDate(dateStr, ""), // No timezone for news articles
 		Author:  strings.TrimSpace(author),
 		Content: processContent(content),
 		URL:     articleURL,
 	}, nil
 }
 
-func formatDate(timestamp string) string {
+func formatDate(timestamp string, tzid string) string {
 	if timestamp == "" {
 		return "Unknown Date"
 	}
 
+	// Handle Unix timestamps in milliseconds
+	if unixMillis, err := strconv.ParseInt(timestamp, 10, 64); err == nil {
+		// Convert milliseconds to seconds
+		t := time.Unix(unixMillis/1000, 0)
+		return t.Format(timeFormat)
+	}
+
+	// Handle ICS dates with explicit timezone
+	if tzid != "" {
+		loc, err := time.LoadLocation(tzid)
+		if err != nil {
+			log.Warnf("unknown timezone: %s", tzid)
+			return "Unknown Date"
+		}
+
+		// Parse ICS format (YYYYMMDDTHHMMSS)
+		t, err := time.ParseInLocation("20060102T150405", timestamp, loc)
+		if err == nil {
+			return t.Format(timeFormat) + " (Local Time)"
+		}
+	}
+
+	// Original handling for article dates (RFC3339)
 	t, err := time.Parse(time.RFC3339, timestamp)
 	if err == nil {
 		return t.Format(timeFormat)
 	}
+
+	// Fallback for other formats
+	log.Warnf("unable to parse timestamp: %s", timestamp)
 	return "Unknown Date"
 }
 
@@ -313,6 +345,7 @@ func updateNewsHTML(newContent string) (bool, error) {
 }
 
 func gitCommitAndPush() error {
+	// Open the repository in the current working directory (repository root)
 	repo, err := git.PlainOpen(".")
 	if err != nil {
 		return fmt.Errorf("repo open failed: %w", err)
